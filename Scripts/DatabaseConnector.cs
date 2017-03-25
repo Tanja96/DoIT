@@ -10,21 +10,23 @@ using UnityEngine.UI;
 
 public class DatabaseConnector : MonoBehaviour
 {
-    private float time=0;
     private IDbConnection dbconn;
     string conn = "";
 
     void Awake()
     {
+        //TÄTÄ EI OIKEAAN
+        //KÄYTÄ JOS MUUTAT DATABASEA
+        DirectoryInfo dataDir = new DirectoryInfo(Application.persistentDataPath);
+        dataDir.Delete(true);
+        //TÄMÄ OIKEAAN BUILDIIN
         string filepath = Application.persistentDataPath + "/" + "Data.db";
         if (!File.Exists(filepath)) {
             WWW loadDB = new WWW(streamingAssetsPath + "Data.db");
             while (!loadDB.isDone) { }
             File.WriteAllBytes(filepath, loadDB.bytes);
         }
-        Debug.Log("Final PATH: " + filepath);
         conn = "URI=file:" + filepath;
-        Debug.Log("Final PATH: " + conn);
     }
 
     public static string streamingAssetsPath
@@ -65,6 +67,8 @@ public class DatabaseConnector : MonoBehaviour
         reader = null;
         dbcmd.Dispose();
         dbcmd = null;
+        dbconn.Close();
+        dbconn = null;
         return lista;
     }
 
@@ -79,6 +83,8 @@ public class DatabaseConnector : MonoBehaviour
         reader.Close();
         reader = null;
         dbcmd.Dispose();
+        dbconn.Close();
+        dbconn = null;
         dbcmd = null;
     }
 
@@ -98,6 +104,8 @@ public class DatabaseConnector : MonoBehaviour
         reader = null;
         dbcmd.Dispose();
         dbcmd = null;
+        dbconn.Close();
+        dbconn = null;
         return luku;
     }
 
@@ -118,6 +126,8 @@ public class DatabaseConnector : MonoBehaviour
         reader = null;
         dbcmd.Dispose();
         dbcmd = null;
+        dbconn.Close();
+        dbconn = null;
         return lista;
     }
 
@@ -142,6 +152,8 @@ public class DatabaseConnector : MonoBehaviour
         reader = null;
         dbcmd.Dispose();
         dbcmd = null;
+        dbconn.Close();
+        dbconn = null;
         return lista;
     }
 }
