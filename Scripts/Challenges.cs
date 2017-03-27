@@ -17,39 +17,33 @@ public class Challenges : MonoBehaviour {
     private string tun = "SELECT ID FROM Tehtävät WHERE Daily = 1 AND Tun > 0 AND Tun >= Sos AND Tun >= Äly AND Tun >=Hen AND Tun >=Fyy";
 
     void Start () {
-        //if(Date == null)
-        //{
-        //    Date = System.DateTime.UtcNow;
-        //}
-        //if(Date.Date != System.DateTime.UtcNow.Date)
-        //{
-        //    NewMissions();
-        //}
-        //Debug.Log(System.DateTime.Now.ToString());
         int pv = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT ViimeksiPaikalla FROM Käyttäjä WHERE ID=1");
-        if (pv == 0)
+        if (pv == 32)
         {
             GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Käyttäjä SET ViimeksiPaikalla = " + System.DateTime.UtcNow.Day + " WHERE ID=1");
             NewMissions();
         }
-        if(System.DateTime.UtcNow.Day == pv)
+        if (System.DateTime.Now.Day != pv)
         {
+            valitut.Clear();
             NewMissions();
             GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Käyttäjä SET ViimeksiPaikalla = " + System.DateTime.UtcNow.Day + " WHERE ID=1");
         }
-    }
-	
-	void Update () {
+        else
+        {
+            ShowChallenges();
+        }
     }
 
     public void SetPoints()
     {
-        foreach(GameObject chal in challenges)
+        for (int i= 1; i <= 5; i++)
         {
-            if (chal.GetComponent<Toggle>().isOn)
+            if(GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT Tehty FROM Päivän WHERE ID="+ i) == 1)
             {
-                List<int> list = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().GetPoints("SELECT Sos,Äly,Fyy,Hen,Tun FROM Tehtävät WHERE Title= " + chal.gameObject.GetComponentInChildren<Text>().text);
-                GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Käyttäjä SET SosPisteet= SosPisteet +" + list[0] + ", ÄlyPisteet= ÄlyPisteet " + list[1] + ", FyyPisteet= FyyPisteet +" + list[2] + ", HenPisteet= HenPisteet +" + list[3] + ", TuPisteetn= TunPisteet +" + list[4] + " WHERE ID =1 ");
+                List<int> list = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().GetPoints("SELECT Sos,Äly,Fyy,Hen,Tun FROM Tehtävät WHERE ID= (SELECT TehtID FROM Päivän WHERE ID=" + i);
+                GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Käyttäjä SET SosPisteet= SosPisteet +" + list[0] + ", FyyPisteet= FyyPisteet +" + list[2] + ", ÄlyPisteet= ÄlyPisteet " + list[1] + ", HenPisteet= HenPisteet +" + list[3] + ", TuPisteetn= TunPisteet +" + list[4] + " WHERE ID =1 ");
+                GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Tehtävät SET Määrä= Määrä + 1 WHERE ID = (SELECT TehtID FROM Päivän WHERE ID=" + i);
             }
         }
     }
@@ -60,6 +54,10 @@ public class Challenges : MonoBehaviour {
         foreach( GameObject chal in challenges)
         {
             List<string> texts = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().DataGetText("SELECT Title,Leipä FROM Tehtävät WHERE ID=(SELECT TehtID FROM Päivän WHERE ID = " + x + ")");
+            if(texts.Count == 0 || texts == null)
+            {
+                Debug.Log("Tyhjä");
+            }
             if (texts[0].Length > 25)
             {
                 string sub = texts[0].Substring(0, 22);
@@ -70,6 +68,10 @@ public class Challenges : MonoBehaviour {
             {
                 chal.GetComponentInChildren<Text>().text = texts[0];
             }
+            int a = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT Tehty FROM Päivän WHERE ID= " + x);
+            string nimi = "Tehty (" + x + ")";
+            if (a == 1) GameObject.Find(nimi).GetComponent<Toggle>().isOn = true;
+            else GameObject.Find(nimi).GetComponent<Toggle>().isOn = false;
             x++;
         }
     }
@@ -88,13 +90,21 @@ public class Challenges : MonoBehaviour {
 
     public void NewMissions()
     {
-        valitut.Clear();
+        SetPoints();
+        CheckLocks();
         int x = 1;
         foreach (GameObject chal in newchallenges)
         {
-            SkipChallenge(x);
-            List<string> texts = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().DataGetText("SELECT Title,Leipä FROM Tehtävät WHERE ID=(SELECT TehtID FROM Päivän WHERE ID = " + x + ")");
-            if(texts[0].Length > 25)
+            //Tarkistaa pitääkö tehtävää vaihtaa
+            if (GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT LukonLukko FROM Päivän WHERE ID=" + x) == 0) NewChallenge(x);
+
+            List <string> texts = GameObject.Find("Jumala").GetComponent<DatabaseConnector>().DataGetText("SELECT Title,Leipä FROM Tehtävät WHERE ID=(SELECT TehtID FROM Päivän WHERE ID = " + x + ")");
+            //Muuttaa tekstin mahtumaan nappulan sisälle
+            if (texts.Count == 0 || texts == null)
+            {
+                Debug.Log("Tyhjä");
+            }
+            if (texts[0].Length > 25)
             {
                 string sub = texts[0].Substring(0, 22);
                 sub = sub + "...";
@@ -109,7 +119,30 @@ public class Challenges : MonoBehaviour {
         uudet.SetActive(true);
     }
 
-    public void SkipChallenge(int index)
+    private void CheckLocks()
+    {
+        //Tarkistaa onko lukittuja tehtäviä
+        List<int> lukot = new List<int>();
+        for (int i= 1; i <= 5; i++)
+        {
+            if(GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT Lukittu FROM Päivän WHERE ID= " + i ) == 1)
+            {
+                lukot.Add(GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT TehtID FROM Päivän WHERE ID= " + i));
+                GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Päivän SET LukonLukko = 1 WHERE ID= " + i);
+            }
+            else
+            {
+                GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Päivän SET LukonLukko = 0 WHERE ID= " + i);
+            }
+        }
+        valitut.Clear();
+        foreach (int i in lukot)
+        {
+            valitut.Add(i);
+        }
+    }
+
+    public void NewChallenge(int index)
     {
         string str;
         if (index == 1) str = sos;
@@ -167,7 +200,9 @@ public class Challenges : MonoBehaviour {
         int rand = (int)Random.Range(0, IDt.Count);
         int num = IDt[rand];
         valitut.Add(num);
-        GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Päivän SET TehtID = " + num + " WHERE ID = " + index);
+        GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Päivän SET TehtID = " + num + ", Lukittu = 0, Viimeksi = null, Tehty = 0 WHERE ID = " + index);
+        //Milloin viimeksi ehdotettu lisäys
+        GameObject.Find("Jumala").GetComponent<DatabaseConnector>().UpdateDatabase("UPDATE Tehtävät SET Viime= " + System.DateTime.Now.Day + " WHERE ID= " + num);
     }
 
     public void ChangeChallenges()

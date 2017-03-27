@@ -26,6 +26,7 @@ public class DatabaseConnector : MonoBehaviour
             while (!loadDB.isDone) { }
             File.WriteAllBytes(filepath, loadDB.bytes);
         }
+        Debug.Log(filepath);
         conn = "URI=file:" + filepath;
     }
 
