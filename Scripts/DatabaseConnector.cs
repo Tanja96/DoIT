@@ -17,8 +17,8 @@ public class DatabaseConnector : MonoBehaviour
     {
         //TÄTÄ EI OIKEAAN
         //KÄYTÄ JOS MUUTAT DATABASEA
-        DirectoryInfo dataDir = new DirectoryInfo(Application.persistentDataPath);
-        dataDir.Delete(true);
+        //DirectoryInfo dataDir = new DirectoryInfo(Application.persistentDataPath);
+        //dataDir.Delete(true);
         //TÄMÄ OIKEAAN BUILDIIN
         string filepath = Application.persistentDataPath + "/" + "Data.db";
         if (!File.Exists(filepath)) {
@@ -26,7 +26,6 @@ public class DatabaseConnector : MonoBehaviour
             while (!loadDB.isDone) { }
             File.WriteAllBytes(filepath, loadDB.bytes);
         }
-        Debug.Log(filepath);
         conn = "URI=file:" + filepath;
     }
 

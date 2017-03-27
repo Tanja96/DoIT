@@ -61,7 +61,6 @@ public class ButtonHappen : MonoBehaviour {
 
     public void Skip()
     {
-        Debug.Log(GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT LukonLukko FROM Päivän WHERE ID=" + index));
         //Tarvitseeko oikeasti katsoa että onko tehtävä aiemmin lukittu? EIkai vaihda jos ei halua vaihtaa?
         if (skipCount > 0 && GameObject.Find("Jumala").GetComponent<DatabaseConnector>().getID("SELECT LukonLukko FROM Päivän WHERE ID=" + index) == 0)
         {
@@ -79,6 +78,7 @@ public class ButtonHappen : MonoBehaviour {
         lukko.SetActive(true);
         uudet.SetActive(false);
         skipCount = 2;
+        skips.GetComponent<Text>().text = skipCount.ToString();
     }
 
     public void IsDone()
